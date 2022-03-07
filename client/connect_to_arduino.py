@@ -3,6 +3,7 @@ import json
 
 RETRIES = 5
 
+LOOK_AT_ME=[60,50,180,50]
 
 def send(ser_: serial.Serial, msg: bytes):
     if not ser_.isOpen():
@@ -31,13 +32,25 @@ def down(ser_: serial.Serial, n: bytes):
 def set_angle(ser_: serial.Serial, motor: bytes, angle: bytes):
     return send(ser_, b's'+motor+angle)
 
+def set_position(ser_: serial.Serial, angles: tuple):
+    pass
+
 
 ser = serial.Serial()
 with open("port.json", "r") as port_file:
     port_data = json.loads(port_file.read())
     ser.port = port_data['port']
     ser.baudrate = port_data['baudrate']
-    ser.timeout = port_data['timeout']
+    #ser.timeout = port_data['timeout']
 
 if __name__ == '__main__':
-    print(set_angle(ser, b'\x00', b'\xb4'))
+    while True:
+        motor, angle = input("m, a").split(",")
+        motor = int(motor).to_bytes(1, "big")
+        if motor == b'':
+            motor = b'\x00'
+        angle = int(angle).to_bytes(1, "big")
+        if angle == b'':
+            angle = b'\x00'
+        print(set_angle(ser, motor, angle))
+

@@ -10,7 +10,7 @@ Servo wrist_rot;
 Servo wrist_ver;
 Servo gripper;
 
-int pos[MOTOR_COUNT] = {0,  15, 180, 0, 0,  73};
+int pos[MOTOR_COUNT] = {60,  50, 180, 50, 0,  73};
 int max_min[MOTOR_COUNT][2] = {{0, 180}, {15, 165}, {0, 180}, {0, 180}, {0, 180}, {10, 73}};
 String input;
 
@@ -169,4 +169,6 @@ void loop() {
     M5=wrist rotation degrees. Allowed values from 0 to 180 degrees
     M6=gripper degrees. Allowed values from 10 to 73 degrees. 10: the toungue is open, 73: the gripper is closed.
   */
+
+  Braccio.ServoMovement(20, pos[0], pos[1], pos[2], pos[3], pos[4], pos[5]);
 }
