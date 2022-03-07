@@ -2,7 +2,17 @@
 
 ## Serial communications to the Arduino
 
-### command
+### motors
+
+- motor; description; range
+- M0; base; 0 - 180
+- M1; shoulder; 15 - 165
+- M2; elbow; 0 - 180
+- M3; vertical wrist; 0 - 180
+- M4; rotation wrist; 0 - 180
+- M5; gripper; 10 - 73
+
+### commands
 
 all values are one byte
 
@@ -12,5 +22,6 @@ all values are one byte
 
 ### responses
 
+- 202 -> everything right
 - 404 -> no motor found
 - 403 -> angel not allowed

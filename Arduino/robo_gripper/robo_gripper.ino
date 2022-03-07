@@ -1,6 +1,8 @@
 #include <Braccio.h>
 #include <Servo.h>
 
+#define MOTOR_COUNT 6
+
 Servo base;
 Servo shoulder;
 Servo elbow;
@@ -8,27 +10,26 @@ Servo wrist_rot;
 Servo wrist_ver;
 Servo gripper;
 
-int pos[6] = {0,  15, 180, 0, 0,  73};
-int max_min[6][2] = {{0, 180}, {15, 165}, {0, 180}, {0, 180}, {0, 180}, {10, 73}};
+int pos[MOTOR_COUNT] = {0,  15, 180, 0, 0,  73};
+int max_min[MOTOR_COUNT][2] = {{0, 180}, {15, 165}, {0, 180}, {0, 180}, {0, 180}, {10, 73}};
 String input;
 
 
 void goToAngel(int servo_, int angel) {
-  int servo = servo_ - 1;
+  if (servo_ >= MOTOR_COUNT || servo < 0) {
+    Serial.print("404");
+  }
 
   if (angel < max_min[servo][0]) {
     pos[servo] = max_min[servo][0];
+    Serial.print("403");
   } else if (angel > max_min[servo][1]) {
     pos[servo] = max_min[servo][1];
+    Serial.print("403");
   } else {
     pos[servo] = angel;
+    Serial.print("202");
   }
-
-  Serial.println("");
-  Serial.println(servo_);
-  Serial.println(pos[servo]);
-
-  Braccio.ServoMovement(20, pos[0], pos[1], pos[2], pos[3], pos[4], pos[5]);
 }
 
 
@@ -66,9 +67,7 @@ void up(int step_) {
     }
   }
 
-  //Serial.println(pos[1]);
-  //Serial.println(pos[2]);
-  //Serial.println(pos[3]);
+  Serial.print("202");
 
   Braccio.ServoMovement(20, pos[0], pos[1], pos[2], pos[3], pos[4], pos[5]);
 }
@@ -107,6 +106,8 @@ void down(int step_) {
     }
   }
 
+  Serial.print("202");
+
   Braccio.ServoMovement(20, pos[0], pos[1], pos[2], pos[3], pos[4], pos[5]);
 }
 
@@ -121,38 +122,34 @@ void loop() {
   if (Serial.available() > 0) {
     input = Serial.readString();
 
-    // up, <angle>
+    // u<angel>
+    // moves up
     if (input[0] == 'u') {
       byte Angel = input[1];
+
+      Serial.print("up: ");
       Serial.println(Angel);
-      //up(Angel);
+      up(Angel);
       
-    // down, <angle>
+    // d<angel>
+    // moves down
     } else if (input[0] == 'd') {
       byte Angel = input[1];
-      
+
+      Serial.print("down: ");
       Serial.println(Angel);
-      //down(Angel);
+      down(Angel);
     }
 
     // <motor>, <angle>
+    // sets angle of motor
     else if (input[0] == 's') {
       byte Motor = input[1];
       byte Angel = input[2];
 
-      //goToAngel(Motor, Angel);
+      goToAngel(Motor, Angel);
     }
-
-    for (int i = 0; i < 6; i++)
-    {
-      Serial.print(pos[i]);
-      Serial.print(", ");
-    }
-    Serial.println();
   }
-
-
-
 
   /*
     Step Delay: a milliseconds delay between the movement of each servo.  Allowed values from 10 to 30 msec.
