@@ -22,6 +22,15 @@ def send(ser_: serial.Serial, msg: bytes):
 
     print("message failed")
 
+def up(ser_: serial.Serial, n: bytes):
+    return send(ser_, b'u'+n)
+
+def down(ser_: serial.Serial, n: bytes):
+    return send(ser_, b'd'+n)
+
+def set_angle(ser_: serial.Serial, motor: bytes, angle: bytes):
+    return send(ser_, b's'+motor+angle)
+
 
 ser = serial.Serial()
 with open("port.json", "r") as port_file:
@@ -31,6 +40,4 @@ with open("port.json", "r") as port_file:
     ser.timeout = port_data['timeout']
 
 if __name__ == '__main__':
-    print(send(ser, b'u/'))
-    print(send(ser, b'u/'))
-    print(send(ser, b'u/'))
+    print(set_angle(ser, b'\x00', b'\xb4'))
