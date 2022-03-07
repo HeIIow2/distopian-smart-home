@@ -1,6 +1,8 @@
 import serial
 import json
 
+def send(ser_: serial.Serial)
+
 ser = serial.Serial()
 with open("port.json", "r") as port_file:
     port_data = json.loads(port_file.read())

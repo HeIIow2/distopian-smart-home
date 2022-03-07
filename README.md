@@ -29,3 +29,6 @@ all values are one byte
 ## PC Client with python
 
 In port.json you can config the port, baudrate, and timeout.
+
+### using:
+- pyserial for the serial communication
