@@ -15,8 +15,8 @@ int max_min[MOTOR_COUNT][2] = {{0, 180}, {15, 165}, {0, 180}, {0, 180}, {0, 180}
 String input;
 
 
-void goToAngel(int servo_, int angel) {
-  if (servo_ >= MOTOR_COUNT || servo < 0) {
+void goToAngel(int servo, int angel) {
+  if (servo >= MOTOR_COUNT || servo < 0) {
     Serial.print("404");
   }
 
@@ -116,6 +116,7 @@ void setup() {
   Braccio.begin();
   Serial.begin(9600);
   Braccio.ServoMovement(20, pos[0], pos[1], pos[2], pos[3], pos[4], pos[5]);
+  Serial.print("202");
 }
 
 void loop() {
@@ -127,17 +128,13 @@ void loop() {
     if (input[0] == 'u') {
       byte Angel = input[1];
 
-      Serial.print("up: ");
-      Serial.println(Angel);
       up(Angel);
       
     // d<angel>
     // moves down
     } else if (input[0] == 'd') {
       byte Angel = input[1];
-
-      Serial.print("down: ");
-      Serial.println(Angel);
+      
       down(Angel);
     }
 
