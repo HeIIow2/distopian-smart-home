@@ -19,6 +19,7 @@ all values are one byte
 - "u<angel>"; moves up by angel
 - "d<devil>"; moves down by devil
 - "s<motor><angel>"; sets the angel of motor to angel
+- "p<motor1><motor2><motor3>"...; sets the position of the whole Gripper
 
 ### responses
 

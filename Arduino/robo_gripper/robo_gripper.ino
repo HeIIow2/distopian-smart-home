@@ -15,20 +15,21 @@ int max_min[MOTOR_COUNT][2] = {{0, 180}, {15, 165}, {0, 180}, {0, 180}, {0, 180}
 String input;
 
 
-void goToAngel(int servo, int angel) {
+int goToAngel(int servo, int angel) {
   if (servo >= MOTOR_COUNT || servo < 0) {
     Serial.print("404");
+    return 404;
   }
 
   if (angel < max_min[servo][0]) {
     pos[servo] = max_min[servo][0];
-    Serial.print("403");
+    return 403;
   } else if (angel > max_min[servo][1]) {
     pos[servo] = max_min[servo][1];
-    Serial.print("403");
+    return 403;
   } else {
     pos[servo] = angel;
-    Serial.print("202");
+    return 202;
   }
 }
 
@@ -144,7 +145,18 @@ void loop() {
       byte Motor = input[1];
       byte Angel = input[2];
 
-      goToAngel(Motor, Angel);
+      Serial.print(goToAngel(Motor, Angel));
+    }
+
+    else if (input[0] == 'p') {
+      int error_code = 202;
+      for(int i=0; i<MOTOR_COUNT; i++) {
+        int current_error_code = goToAngel(i, input[i+1]);
+        if (current_error_code != 202) {
+          error_code = current_error_code;
+        }
+      }
+      Serial.print(error_code);
     }
   }
 
