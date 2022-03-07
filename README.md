@@ -25,3 +25,7 @@ all values are one byte
 - 202 -> everything right
 - 404 -> no motor found
 - 403 -> angel not allowed
+
+## PC Client with python
+
+In port.json you can config the port, baudrate, and timeout.
