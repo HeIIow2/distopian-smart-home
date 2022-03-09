@@ -2,6 +2,14 @@
 #include <Servo.h>
 
 #define MOTOR_COUNT 6
+#define VERTICAL_COUNT 3
+
+#define SUCCESS 200
+#define NOT_FOUND 404
+#define FORBIDDEN 403
+#define INTERNAL_ERROR 500
+
+#define IGNORE_CODE 666
 
 Servo base;
 Servo shoulder;
@@ -10,106 +18,125 @@ Servo wrist_rot;
 Servo wrist_ver;
 Servo gripper;
 
-int pos[MOTOR_COUNT] = {60,  50, 180, 50, 0,  73};
+int pos[MOTOR_COUNT] = {60,  15, 180, 90, 0,  73};
 int max_min[MOTOR_COUNT][2] = {{0, 180}, {15, 165}, {0, 180}, {0, 180}, {0, 180}, {10, 73}};
-String input;
+int vertical_Motors[VERTICAL_COUNT] = {1, 2, 3};
 
 
 int goToAngel(int servo, int angel) {
-  if (servo >= MOTOR_COUNT || servo < 0) {
-    Serial.print("404");
-    return 404;
-  }
+  if (servo >= MOTOR_COUNT || servo < 0) return NOT_FOUND;
 
-  if (angel < max_min[servo][0]) {
+  if (angel < max_min[servo][0])
+  {
     pos[servo] = max_min[servo][0];
-    return 403;
-  } else if (angel > max_min[servo][1]) {
+    return FORBIDDEN;
+  }
+
+  if (angel > max_min[servo][1])
+  {
     pos[servo] = max_min[servo][1];
-    return 403;
-  } else {
-    pos[servo] = angel;
-    return 202;
+    return FORBIDDEN;
   }
+
+  pos[servo] = angel;
+  return SUCCESS;
 }
 
 
+int vertical(int step_) {
+  if (step_ == 0) return SUCCESS;
 
+  int ranges[VERTICAL_COUNT];
+  byte winkelsumme = 195;
+  int error_code = SUCCESS;
 
-void up(int step_) {
-  bool m1 = false;
-  bool m2 = true;
-  bool m3 = true;
+  int total_range = 0;
+  bool dir = step_ > 0;
 
-  int winkelsumme = 195;
+  for (byte i = 0; i < VERTICAL_COUNT; i++) {
+    byte index = vertical_Motors[i];
 
-  if (pos[2] <= max_min[2][0]) {
-    m2 = false;
+    // if step is bigger than 0 get the upper bound else the lower one
+    int bound = max_min[index][(int) dir];
+
+    // compute range of this motor
+    ranges[i] = bound - pos[index];
+
+    // add the range to total
+    total_range += ranges[i];
   }
-  if (pos[3] <= max_min[3][0]) {
-    m3 = false;
+
+  float factor = (float) step_ / (float) total_range;
+  if (factor > 1.0) {
+    factor = 1.0;
+    error_code = FORBIDDEN;
   }
 
-  int new_m1 = pos[1] + step_;
+  for (byte i = 0; i < VERTICAL_COUNT; i++) {
+    byte index = vertical_Motors[i];
+    pos[index] += (int) (factor * (float) step_);
+  }
 
-  int available_count = m1 + m2 + m3;
-
-  int add = (195 - (new_m1 + pos[2] + pos[3])) / available_count;
-
-  pos[1] = new_m1;
-  pos[2] = pos[2] + add * m2;
-  pos[3] = pos[3] + add * m3;
-
-  for (int i = 0; i <= 6; i++) {
+  for (int i = 0; i < 6; i++) {
     if (pos[i] < max_min[i][0]) {
       pos[i] = max_min[i][0];
+      error_code = INTERNAL_ERROR;
     } else if (pos[i] > max_min[i][1]) {
       pos[i] = max_min[i][1];
+      error_code = INTERNAL_ERROR;
     }
   }
 
-  Serial.print("202");
-
-  Braccio.ServoMovement(20, pos[0], pos[1], pos[2], pos[3], pos[4], pos[5]);
+  return error_code;
 }
 
+int up(byte step_) {
+  return vertical((int)step_);
+}
 
+int down(byte step_) {
+  return vertical(-((int)step_));
+}
 
-void down(int step_) {
-  bool m1 = false;
-  bool m2 = true;
-  bool m3 = true;
+int get_position() {
+  Serial.print(SUCCESS);
+  Serial.print((char) MOTOR_COUNT);
 
-  int winkelsumme = 195;
-
-  if (pos[2] >= max_min[2][1]) {
-    m2 = false;
+  for (int i = 0; i < MOTOR_COUNT; i++)
+  {
+    Serial.print((char) pos[i]);
   }
-  if (pos[3] >= max_min[3][1]) {
-    m3 = false;
-  }
+}
 
-  int new_m1 = pos[1] - step_;
+int set_height(byte height) {
+  
+}
 
-  int available_count = m1 + m2 + m3;
+int set_angle(byte angle) {
+  // total sum = 285
+  // m1 = angle
+  // m2 = 180 - angle
+  // m3 = 285 - (angle + 180 - angle)
+}
 
-  int add = (195 - (new_m1 + pos[2] + pos[3])) / available_count;
+int execute(String input) {
+  if (input[0] == 'u') return down(input[1]);
+  if (input[0] == 'd') return down(input[1]);
+  if (input[0] == 's') return goToAngel(input[1], input[2]);
+  if (input[0] == 'g') get_position(); return IGNORE_CODE;
 
-  pos[1] = new_m1;
-  pos[2] = pos[2] + add * m2;
-  pos[3] = pos[3] + add * m3;
-
-  for (int i = 0; i <= 6; i++) {
-    if (pos[i] < max_min[i][0]) {
-      pos[i] = max_min[i][0];
-    } else if (pos[i] > max_min[i][1]) {
-      pos[i] = max_min[i][1];
+  if (input[0] == 'p')
+  {
+    int error_code = 202;
+    for (int i = 0; i < MOTOR_COUNT; i++) {
+      int current_error_code = goToAngel(i, input[i + 1]);
+      if (current_error_code != 202) {
+        error_code = current_error_code;
+      }
     }
+
+    return error_code;
   }
-
-  Serial.print("202");
-
-  Braccio.ServoMovement(20, pos[0], pos[1], pos[2], pos[3], pos[4], pos[5]);
 }
 
 
@@ -122,42 +149,21 @@ void setup() {
 
 void loop() {
   if (Serial.available() > 0) {
-    input = Serial.readString();
-
-    // u<angel>
-    // moves up
-    if (input[0] == 'u') {
-      byte Angel = input[1];
-
-      up(Angel);
-      
-    // d<angel>
-    // moves down
-    } else if (input[0] == 'd') {
-      byte Angel = input[1];
-      
-      down(Angel);
-    }
-
-    // <motor>, <angle>
-    // sets angle of motor
-    else if (input[0] == 's') {
-      byte Motor = input[1];
-      byte Angel = input[2];
-
-      Serial.print(goToAngel(Motor, Angel));
-    }
-
-    else if (input[0] == 'p') {
-      int error_code = 202;
-      for(int i=0; i<MOTOR_COUNT; i++) {
-        int current_error_code = goToAngel(i, input[i+1]);
-        if (current_error_code != 202) {
-          error_code = current_error_code;
-        }
-      }
+    int error_code = execute(Serial.readString());
+    if (IGNORE_CODE != error_code) {
       Serial.print(error_code);
     }
+
+    for (int i = 0; i < 6; i++) {
+      if (pos[i] < max_min[i][0]) {
+        pos[i] = max_min[i][0];
+        error_code = INTERNAL_ERROR;
+      } else if (pos[i] > max_min[i][1]) {
+        pos[i] = max_min[i][1];
+        error_code = INTERNAL_ERROR;
+      }
+    }
+    Braccio.ServoMovement(10, pos[0], pos[1], pos[2], pos[3], pos[4], pos[5]);
   }
 
   /*
@@ -169,6 +175,4 @@ void loop() {
     M5=wrist rotation degrees. Allowed values from 0 to 180 degrees
     M6=gripper degrees. Allowed values from 10 to 73 degrees. 10: the toungue is open, 73: the gripper is closed.
   */
-
-  Braccio.ServoMovement(20, pos[0], pos[1], pos[2], pos[3], pos[4], pos[5]);
 }

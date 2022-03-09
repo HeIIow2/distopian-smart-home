@@ -3,7 +3,8 @@ import json
 
 RETRIES = 5
 
-LOOK_AT_ME=[60,50,180,50]
+LOOK_AT_ME = [60, 50, 180, 50]
+
 
 def send(ser_: serial.Serial, msg: bytes):
     if not ser_.isOpen():
@@ -23,17 +24,31 @@ def send(ser_: serial.Serial, msg: bytes):
 
     print("message failed")
 
+
 def up(ser_: serial.Serial, n: bytes):
-    return send(ser_, b'u'+n)
+    return send(ser_, b'u' + n)
+
 
 def down(ser_: serial.Serial, n: bytes):
-    return send(ser_, b'd'+n)
+    return send(ser_, b'd' + n)
+
 
 def set_angle(ser_: serial.Serial, motor: bytes, angle: bytes):
-    return send(ser_, b's'+motor+angle)
+    return send(ser_, b's' + motor + angle)
 
 def set_position(ser_: serial.Serial, angles: tuple):
     pass
+
+def get_position(ser_: serial.Serial):
+    error_code = send(ser_, b'g')
+    if error_code != b'200':
+        return error_code
+
+    length_bytes = ser_.read(1)
+    length = int.from_bytes(length_bytes, 'big')
+    positions = list(ser_.read(length))
+
+    return positions
 
 
 ser = serial.Serial()
@@ -41,16 +56,21 @@ with open("port.json", "r") as port_file:
     port_data = json.loads(port_file.read())
     ser.port = port_data['port']
     ser.baudrate = port_data['baudrate']
-    #ser.timeout = port_data['timeout']
+    # ser.timeout = port_data['timeout']
 
 if __name__ == '__main__':
     while True:
-        motor, angle = input("m, a").split(",")
-        motor = int(motor).to_bytes(1, "big")
-        if motor == b'':
-            motor = b'\x00'
-        angle = int(angle).to_bytes(1, "big")
-        if angle == b'':
-            angle = b'\x00'
-        print(set_angle(ser, motor, angle))
+        """
+        for i in range(10):
+            print("up: ", up(ser, (i*20).to_bytes(1, "big")))
+            print(get_position(ser))
 
+        for i in range(10):
+            print("down", down(ser, (i*20).to_bytes(1, "big")))
+            print(get_position(ser))
+        """
+
+        input_ = input("--")
+        set_angle(ser, motor=b'\x03', angle=int(input_).to_bytes(1, 'big'))
+
+        print(get_position(ser))
